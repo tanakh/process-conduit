@@ -6,6 +6,7 @@ module System.Process.QQ (
   enumCmd,
   ) where
 
+import Control.Applicative
 import Control.Exception
 import Control.Monad
 import Control.Monad.Trans
@@ -40,9 +41,8 @@ enumCmd = def { quoteExp = genEnumCmd }
 
 genCmd :: String -> ExpQ
 genCmd str =
-  [| do l <- E.run_ $ enumProcess $(quoteExp lt str) $$ EB.consume
-        let s = B.concat $ BL.toChunks l
-        B.length s `seq` return s
+  [| E.run_ $ enumProcess $(quoteExp lt str) $$ do
+      (B.concat . BL.toChunks <$> EB.consume)
    |]
 
 genLCmd :: String -> ExpQ
@@ -57,12 +57,16 @@ enumProcess :: MonadIO m => LT.Text -> E.Enumerator B.ByteString m a
 enumProcess s step = do
   (h, ph) <- liftIO $ openProcess s
   r <- EB.enumHandle 65536 h step
-  checkRet ph
+  r `seq` checkRet ph
   return r
 
 openProcess :: LT.Text -> IO (Handle, ProcessHandle)
 openProcess s = do
-  (_, Just h, _, ph) <- createProcess (shell $ LT.unpack s) { std_out = CreatePipe }
+  (Just g, Just h, _, ph) <- createProcess (shell $ LT.unpack s)
+    { std_in = CreatePipe
+    , std_out = CreatePipe
+    , std_err = Inherit }
+  hClose g
   return (h, ph)
 
 checkRet :: MonadIO m => ProcessHandle -> E.Iteratee a m ()
@@ -70,4 +74,3 @@ checkRet ph = liftIO $ do
   ec <- waitForProcess ph
   when (ec /= ExitSuccess) $ do
     throwIO ec
-
