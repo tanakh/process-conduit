@@ -16,7 +16,7 @@ $ cabal install process-qq
 
 process-qq has two quasi-quoters, `cmd` and `enumCmd`.
 
-The result type of `cmd` is Lazy ByteString,
+The result type of `cmd` is `IO Data.ByteString.Lazy.ByteString`,
 `enumCmd`'s is `MonadIO m => Enumerator ByteString m a`.
 
 Command is failed, an Exception is thrown.
