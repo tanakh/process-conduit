@@ -28,6 +28,9 @@ Command is executed in ***run-time***, not compile-time.
 * Invoke a process simply
 
 ~~~ {.haskell}
+{-# LANGUAGE QuasiQuotes #-}
+import System.Process.QQ
+
 main = print =<< [cmd|ls|]
 ~~~
 
