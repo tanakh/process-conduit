@@ -1,5 +1,5 @@
 Name:                process-qq
-Version:             0.1.0
+Version:             0.2.0
 Synopsis:            Quasi-Quoters for exec process
 Description:         Quasi-Quoters for exec process
 Homepage:            http://github.com/tanakh/process-qq
