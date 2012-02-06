@@ -1,30 +1,54 @@
-process-qq: A Quasi-Quoter to execute processes
+process-conduit: Conduit for processes
 ===============================================
 
 # About
 
-This is a simple package for executing external process using quasi-quoters.
+This package provides [conduit](http://hackage.haskell.org/package/conduit)
+for processes.
+Also this provides quasi-quoters for process using it.
 
 # Install
 
 ~~~ {.bash}
 $ cabal update
-$ cabal install process-qq
+$ cabal install process-conduit
 ~~~
 
-# API
+# Document
 
-process-qq has three quasi-quoters, `cmd`, `lcmd` and `enumCmd`.
+Haddock documents are here:
 
-The result type of `cmd` is `(Strict) ByteString`,
-`lcmd` is `Lazy ByteString`,
-`enumCmd`'s is `MonadIO m => Enumerator ByteString m a`.
+<http://hackage.haskell.org/package/process-conduit>
 
-Command is failed, an Exception is thrown.
+# Quasi Quoters
 
-Command is executed in ***run-time***, not compile-time.
+process-conduit has three quasi-quoters, `cmd`, `scmd` and `ccmd`.
 
-# Example
+The result type of `cmd` is Lazy `ByteString`,
+but execution will perform strictly.
+
+The result type of `scmd` and `ccmd` are
+`Source ByteString m ByteString` and
+`Conduit ByteString m ByteString` respectively.
+
+If a command is failed, an exception is thrown.
+
+Commands are executed in ***run-time***, not compile-time.
+
+# Examples
+
+* Create a Source and a Conduit of process
+
+~~~ {.haskell}
+import qualified Data.Conduit as C
+import qualified Data.Conduit.Binary as CB
+import Data.Conduit.Process
+import System.IO
+
+main :: IO ()
+main = C.runResourceT $ do
+  sourceCmd "ls" C.$= conduitCmd "sort" C.$$ CB.sinkHandle stdout
+~~~
 
 * Invoke a process simply
 
@@ -35,11 +59,12 @@ import System.Process.QQ
 main = print =<< [cmd|ls|]
 ~~~
 
-* Enumerate a process
+* Conduit Quasi-Quoters
 
 ~~~ {.haskell}
-main =
-  run_ $ [enumCmd|curl http://www.google.com/|] $$ iterHandle stdout
+main :: IO ()
+main = runResourceT $ do
+  [scmd|ls|] $= [ccmd|sort|] $$ sinkHandle stdout
 ~~~
 
 * Unquoting (syntax is same as [shakespeare-text](http://hackage.haskell.org/package/shakespeare-text))
