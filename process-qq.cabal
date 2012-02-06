@@ -1,32 +1,46 @@
-Name:                process-qq
-Version:             0.2.0
-Synopsis:            Quasi-Quoters for exec process
-Description:         Quasi-Quoters for exec process
+Name:                process-conduit
+Version:             0.0.0
+Synopsis:            Conduit for process
+Description:         Conduit for process
 Homepage:            http://github.com/tanakh/process-qq
 License:             BSD3
 License-file:        LICENSE
 Author:              Hideyuki Tanaka
 Maintainer:          Hideyuki Tanaka <tanaka.hideyuki@gmail.com>
-Copyright:           (c) 2011, Hideyuki Tanaka
+Copyright:           (c) 2011-2012, Hideyuki Tanaka
 Category:            System
 Build-type:          Simple
 
-Extra-source-files:  README.md
-                     Test.hs
-
 Cabal-version:       >=1.8
 
+Extra-source-files:  README.md
+
+Flag examples
+  Description:         Build examples
+  Default:             False
+
 Library
-  Exposed-modules:     System.Process.QQ
+  Exposed-modules:     Data.Conduit.Process
+                       -- System.Process.QQ
   
-  Build-depends:       base >= 4 && < 5
-                     , template-haskell >= 2.4 && < 2.7
-                     , mtl >= 2.0 && < 2.1
-                     , bytestring >= 0.9 && < 0.10
-                     , text >= 0.11 && < 0.12
-                     , process >= 1.0 && < 1.1
-                     , enumerator >= 0.4.16 && < 0.5
-                     , shakespeare-text >= 0.10 && < 0.11
+  Build-depends:       base             == 4.*
+                     , template-haskell >= 2.4 && < 2.8
+                     , mtl              == 2.0.*
+                     , bytestring       == 0.9.*
+                     , text             == 0.11.*
+                     , process          == 1.1.*
+                     , conduit          == 0.2.*
+                     , shakespeare-text == 0.10.*
+
+Executable process-conduit
+  Hs-source-dirs:      examples
+  Main-is:             TestConduit.hs
+  Build-depends:       base            == 4.*
+                     , conduit         == 0.2.*
+                     , process-conduit
+
+  if !flag(examples)
+    Buildable:         False
 
 Source-repository head
   Type:                git
