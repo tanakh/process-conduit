@@ -8,12 +8,15 @@ License-file:        LICENSE
 Author:              Hideyuki Tanaka
 Maintainer:          Hideyuki Tanaka <tanaka.hideyuki@gmail.com>
 Copyright:           (c) 2011-2012, Hideyuki Tanaka
-Category:            System
+Category:            System, Conduit
 Build-type:          Simple
-
 Cabal-version:       >=1.8
 
 Extra-source-files:  README.md
+
+Source-repository head
+  Type:                git
+  Location:            git://github.com/tanakh/process-qq.git
 
 Flag examples
   Description:         Build examples
@@ -21,7 +24,7 @@ Flag examples
 
 Library
   Exposed-modules:     Data.Conduit.Process
-                       -- System.Process.QQ
+                       System.Process.QQ
   
   Build-depends:       base             == 4.*
                      , template-haskell >= 2.4 && < 2.8
@@ -38,10 +41,13 @@ Executable process-conduit
   Build-depends:       base            == 4.*
                      , conduit         == 0.2.*
                      , process-conduit
-
   if !flag(examples)
     Buildable:         False
 
-Source-repository head
-  Type:                git
-  Location:            git://github.com/tanakh/process-qq.git
+Executable process-qq
+  Hs-source-dirs:      examples
+  Main-is:             TestQQ.hs
+  Build-depends:       base            == 4.*
+                     , process-conduit
+  if !flag(examples)
+    Buildable:         False

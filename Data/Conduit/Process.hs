@@ -2,9 +2,11 @@ module Data.Conduit.Process (
   -- * run process
   sourceProcess,
   conduitProcess,
+  
   -- * run command
   sourceCmd,
   conduitCmd,
+  
   -- * Convenience re-exports
   shell,
   proc,
@@ -20,7 +22,6 @@ import Control.Monad.Trans
 import qualified Data.ByteString as B
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
-import Data.Monoid
 import System.Exit
 import System.IO
 import System.Process
