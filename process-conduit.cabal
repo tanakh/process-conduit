@@ -35,6 +35,8 @@ Library
                      , conduit          == 0.2.*
                      , shakespeare-text == 0.10.*
 
+  Ghc-options:         -Wall
+
 Executable process-conduit
   Hs-source-dirs:      examples
   Main-is:             TestConduit.hs
