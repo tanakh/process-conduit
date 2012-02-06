@@ -2,7 +2,7 @@ Name:                process-conduit
 Version:             0.0.0
 Synopsis:            Conduit for process
 Description:         Conduit for process
-Homepage:            http://github.com/tanakh/process-qq
+Homepage:            http://github.com/tanakh/process-conduit
 License:             BSD3
 License-file:        LICENSE
 Author:              Hideyuki Tanaka
@@ -16,7 +16,7 @@ Extra-source-files:  README.md
 
 Source-repository head
   Type:                git
-  Location:            git://github.com/tanakh/process-qq.git
+  Location:            git://github.com/tanakh/process-conduit.git
 
 Flag examples
   Description:         Build examples
