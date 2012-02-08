@@ -16,6 +16,7 @@ module Data.Conduit.Process (
   ProcessHandle,
   ) where
 
+import Control.Applicative
 import Control.Exception
 import Control.Monad
 import Control.Monad.Trans
@@ -57,11 +58,20 @@ conduitProcess cp = C.conduitIO alloc cleanup push close
 
     close (Just cin, Just cout, _, ph) = liftIO $ do
       hClose cin
-      ec <- waitForProcess ph
-      when (ec /= ExitSuccess) $ throwIO ec
-      str <- B.hGetContents cout
+      ret <- getRest
       hClose cout
-      return [str]
+      return ret
+      where
+        getRest = do
+          mbec <- getProcessExitCode ph
+          case mbec of
+            Nothing -> do
+              str <- B.hGetNonBlocking cout bufSize
+              (str:) <$> getRest
+            Just ec -> do
+              when (ec /= ExitSuccess) $ throwIO ec
+              str <- B.hGetContents cout
+              return [str]
 
 sourceCmd :: C.ResourceIO m => String -> C.Source m B.ByteString
 sourceCmd cmd = CL.sourceNull C.$= conduitCmd cmd
