@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 
 module System.Process.QQ (
+  -- * Quasi Quoters
   cmd,
   scmd,
   ccmd,
@@ -24,13 +25,16 @@ def = QuasiQuoter
   , quoteDec  = undefined
   }
 
+-- | Command result of (Lazy) ByteString.
 cmd :: QuasiQuoter
 cmd = def { quoteExp = \str -> [|
   BL.fromChunks <$> C.runResourceT (sourceCmd (LT.unpack $(quoteExp lt str)) C.$$ CL.consume)
 |] }
 
+-- | Source of shell command
 scmd :: QuasiQuoter
 scmd = def { quoteExp = \str -> [| sourceCmd $(quoteExp lt str) |] }
 
+-- | Conduit of shell command
 ccmd :: QuasiQuoter
 ccmd = def { quoteExp = \str -> [| conduitCmd $(quoteExp lt str) |] }

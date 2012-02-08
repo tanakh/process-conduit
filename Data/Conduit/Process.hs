@@ -1,9 +1,9 @@
 module Data.Conduit.Process (
-  -- * run process
+  -- * Run process
   sourceProcess,
   conduitProcess,
   
-  -- * run command
+  -- * Run shell command
   sourceCmd,
   conduitCmd,
   
@@ -30,9 +30,11 @@ import System.Process
 bufSize :: Int
 bufSize = 64 * 1024
 
+-- | Source of process
 sourceProcess :: C.ResourceIO m => CreateProcess -> C.Source m B.ByteString
 sourceProcess cp = CL.sourceNull C.$= conduitProcess cp
 
+-- | Conduit of process
 conduitProcess :: C.ResourceIO m => CreateProcess -> C.Conduit B.ByteString m B.ByteString
 conduitProcess cp = C.conduitIO alloc cleanup push close
   where
@@ -73,9 +75,11 @@ conduitProcess cp = C.conduitIO alloc cleanup push close
               str <- B.hGetContents cout
               return [str]
 
+-- | Source of shell command
 sourceCmd :: C.ResourceIO m => String -> C.Source m B.ByteString
 sourceCmd cmd = CL.sourceNull C.$= conduitCmd cmd
 
+-- | Conduit of shell command
 conduitCmd :: C.ResourceIO m
               => String
               -> C.Conduit B.ByteString m B.ByteString

@@ -1,7 +1,11 @@
 Name:                process-conduit
-Version:             0.0.3
-Synopsis:            Conduit for process
-Description:         Conduit for process
+Version:             0.0.4
+Synopsis:            Conduits for processes
+
+Description:
+  Conduits for processes.
+  For more details: <https://github.com/tanakh/process-conduit/blob/master/README.md>
+
 Homepage:            http://github.com/tanakh/process-conduit
 License:             BSD3
 License-file:        LICENSE
