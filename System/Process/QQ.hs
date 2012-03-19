@@ -33,8 +33,8 @@ cmd = def { quoteExp = \str -> [|
 
 -- | Source of shell command
 scmd :: QuasiQuoter
-scmd = def { quoteExp = \str -> [| sourceCmd $(quoteExp lt str) |] }
+scmd = def { quoteExp = \str -> [| sourceCmd (LT.unpack $(quoteExp lt str)) |] }
 
 -- | Conduit of shell command
 ccmd :: QuasiQuoter
-ccmd = def { quoteExp = \str -> [| conduitCmd $(quoteExp lt str) |] }
+ccmd = def { quoteExp = \str -> [| conduitCmd (LT.unpack $(quoteExp lt str)) |] }
