@@ -31,11 +31,11 @@ bufSize :: Int
 bufSize = 64 * 1024
 
 -- | Source of process
-sourceProcess :: C.ResourceIO m => CreateProcess -> C.Source m B.ByteString
+sourceProcess :: C.MonadResource m => CreateProcess -> C.Source m B.ByteString
 sourceProcess cp = CL.sourceNull C.$= conduitProcess cp
 
 -- | Conduit of process
-conduitProcess :: C.ResourceIO m => CreateProcess -> C.Conduit B.ByteString m B.ByteString
+conduitProcess :: C.MonadResource m => CreateProcess -> C.Conduit B.ByteString m B.ByteString
 conduitProcess cp = C.conduitIO alloc cleanup push close
   where
     alloc = createProcess cp
@@ -76,11 +76,11 @@ conduitProcess cp = C.conduitIO alloc cleanup push close
               return [str]
 
 -- | Source of shell command
-sourceCmd :: C.ResourceIO m => String -> C.Source m B.ByteString
+sourceCmd :: C.MonadResource m => String -> C.Source m B.ByteString
 sourceCmd cmd = CL.sourceNull C.$= conduitCmd cmd
 
 -- | Conduit of shell command
-conduitCmd :: C.ResourceIO m
+conduitCmd :: C.MonadResource m
               => String
               -> C.Conduit B.ByteString m B.ByteString
 conduitCmd cmd = conduitProcess (shell cmd)

@@ -36,8 +36,8 @@ Library
                      , bytestring       == 0.9.*
                      , text             == 0.11.*
                      , process          >= 1.0 && < 1.2
-                     , conduit          == 0.2.*
-                     , shakespeare-text == 0.10.*
+                     , conduit          == 0.3.*
+                     , shakespeare-text == 0.11.*
 
   Ghc-options:         -Wall
 
@@ -45,7 +45,7 @@ Executable process-conduit
   Hs-source-dirs:      examples
   Main-is:             TestConduit.hs
   Build-depends:       base            == 4.*
-                     , conduit         == 0.2.*
+                     , conduit         == 0.3.*
                      , process-conduit
   if !flag(examples)
     Buildable:         False
