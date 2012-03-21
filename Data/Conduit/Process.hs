@@ -28,21 +28,15 @@ import System.Exit
 import System.IO
 import System.Process
 
-#if MIN_VERSION_conduit(0,3,0)
-#define RESOURCE C.MonadResource
-#else
-#define RESOURCE C.ResourceIO
-#endif
-
 bufSize :: Int
 bufSize = 64 * 1024
 
 -- | Source of process
-sourceProcess :: RESOURCE m => CreateProcess -> C.Source m B.ByteString
+sourceProcess :: C.MonadResource m => CreateProcess -> C.Source m B.ByteString
 sourceProcess cp = CL.sourceNull C.$= conduitProcess cp
 
 -- | Conduit of process
-conduitProcess :: RESOURCE m => CreateProcess -> C.Conduit B.ByteString m B.ByteString
+conduitProcess :: C.MonadResource m => CreateProcess -> C.Conduit B.ByteString m B.ByteString
 conduitProcess cp = C.conduitIO alloc cleanup push close
   where
     alloc = createProcess cp
@@ -83,11 +77,11 @@ conduitProcess cp = C.conduitIO alloc cleanup push close
               return [str]
 
 -- | Source of shell command
-sourceCmd :: RESOURCE m => String -> C.Source m B.ByteString
+sourceCmd :: C.MonadResource m => String -> C.Source m B.ByteString
 sourceCmd cmd = CL.sourceNull C.$= conduitCmd cmd
 
 -- | Conduit of shell command
-conduitCmd :: RESOURCE m
+conduitCmd :: C.MonadResource m
               => String
               -> C.Conduit B.ByteString m B.ByteString
 conduitCmd cmd = conduitProcess (shell cmd)
