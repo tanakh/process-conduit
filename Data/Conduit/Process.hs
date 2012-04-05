@@ -1,10 +1,12 @@
-{-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings, DoAndIfThenElse #-}
 module Data.Conduit.Process (
   -- * Run process
+  pipeProcess,
   sourceProcess,
   conduitProcess,
   
   -- * Run shell command
+  pipeCmd,
   sourceCmd,
   conduitCmd,
   
@@ -17,13 +19,12 @@ module Data.Conduit.Process (
   ProcessHandle,
   ) where
 
-import Control.Applicative
-import Control.Exception
 import Control.Monad
 import Control.Monad.Trans
+import Control.Monad.Trans.Resource
 import qualified Data.ByteString as B
-import qualified Data.Conduit as C
-import qualified Data.Conduit.List as CL
+import Data.Conduit
+import qualified Data.Conduit.List as C
 import System.Exit
 import System.IO
 import System.Process
@@ -31,57 +32,60 @@ import System.Process
 bufSize :: Int
 bufSize = 64 * 1024
 
--- | Source of process
-sourceProcess :: C.MonadResource m => CreateProcess -> C.Source m B.ByteString
-sourceProcess cp = CL.sourceNull C.$= conduitProcess cp
-
--- | Conduit of process
-conduitProcess :: C.MonadResource m => CreateProcess -> C.Conduit B.ByteString m B.ByteString
-conduitProcess cp = C.conduitIO alloc cleanup push close
+-- | Pipe of process
+pipeProcess
+  :: MonadResource m
+     => CreateProcess
+     -> Pipe B.ByteString B.ByteString m ()
+pipeProcess cp = flip PipeM (return ()) $ do
+  (_, (Just cin, Just cout, _, ph)) <- allocate createp closep
+  return $ go cin cout ph B.hGetNonBlocking
   where
-    alloc = createProcess cp
-      { std_in = CreatePipe
+    createp = createProcess cp
+      { std_in  = CreatePipe
       , std_out = CreatePipe
       }
 
-    cleanup _ =
-      return ()
-  
-    push (Just cin, Just cout, _, ph) bstr = liftIO $ do
-      B.hPutStr cin bstr
-      -- hFlush cin
-      mbec <- getProcessExitCode ph
-      case mbec of
-        Nothing -> do
-          str <- B.hGetNonBlocking cout bufSize
-          return $ C.IOProducing [str]
-        Just ec -> do
-          when (ec /= ExitSuccess) $ throwIO ec
-          return $ C.IOFinished Nothing []
-
-    close (Just cin, Just cout, _, ph) = liftIO $ do
+    closep (Just cin, Just cout, _, ph) = do
       hClose cin
-      ret <- getRest
       hClose cout
-      return ret
-      where
-        getRest = do
-          mbec <- getProcessExitCode ph
-          case mbec of
-            Nothing -> do
-              str <- B.hGetNonBlocking cout bufSize
-              (str:) <$> getRest
-            Just ec -> do
-              when (ec /= ExitSuccess) $ throwIO ec
-              str <- B.hGetContents cout
-              return [str]
+      _ <- waitForProcess ph
+      return ()
+
+    go cin cout ph rd = do
+      out <- liftIO $ rd cout bufSize
+      if B.null out then do
+        end <- liftIO $ getProcessExitCode ph
+        case end of
+          Just ec -> do
+            lift $ when (ec /= ExitSuccess) $ monadThrow ec
+            Done Nothing ()
+          Nothing -> do
+            NeedInput
+              (\inp -> do
+                  liftIO $ B.hPut cin inp >> hFlush cin
+                  go cin cout ph rd)
+              (do liftIO (hClose cin)
+                  go cin cout ph B.hGetSome)
+      else do
+        HaveOutput (go cin cout ph rd) (return ()) out
+
+-- | Source of process
+sourceProcess :: MonadResource m => CreateProcess -> Source m B.ByteString
+sourceProcess cp = C.sourceNull $= conduitProcess cp
+
+-- | Conduit of process
+conduitProcess :: MonadResource m => CreateProcess -> Conduit B.ByteString m B.ByteString
+conduitProcess = pipeProcess
+
+-- | Pipe of shell command
+pipeCmd :: MonadResource m => String -> Pipe B.ByteString B.ByteString m ()
+pipeCmd = pipeProcess . shell
 
 -- | Source of shell command
-sourceCmd :: C.MonadResource m => String -> C.Source m B.ByteString
-sourceCmd cmd = CL.sourceNull C.$= conduitCmd cmd
+sourceCmd :: MonadResource m => String -> Source m B.ByteString
+sourceCmd = sourceProcess . shell
 
 -- | Conduit of shell command
-conduitCmd :: C.MonadResource m
-              => String
-              -> C.Conduit B.ByteString m B.ByteString
-conduitCmd cmd = conduitProcess (shell cmd)
+conduitCmd :: MonadResource m => String -> Conduit B.ByteString m B.ByteString
+conduitCmd = conduitProcess . shell
