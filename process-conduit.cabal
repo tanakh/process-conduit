@@ -32,7 +32,7 @@ Library
   
   Build-depends:       base             == 4.*
                      , template-haskell >= 2.4 && < 2.8
-                     , mtl              == 2.0.*
+                     , mtl              >= 2.0 && < 2.2
                      , bytestring       == 0.9.*
                      , text             == 0.11.*
                      , process          >= 1.0 && < 1.2
