@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, OverloadedStrings, DoAndIfThenElse #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings, DoAndIfThenElse, BangPatterns #-}
 module Data.Conduit.Process (
   -- * Run process
   pipeProcess,
@@ -19,6 +19,8 @@ module Data.Conduit.Process (
   ProcessHandle,
   ) where
 
+import Control.Concurrent
+import Control.Concurrent.MVar
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Resource
@@ -39,7 +41,8 @@ pipeProcess
      -> Pipe B.ByteString B.ByteString m ()
 pipeProcess cp = flip PipeM (return ()) $ do
   (_, (Just cin, Just cout, _, ph)) <- allocate createp closep
-  return $ go cin cout ph B.hGetNonBlocking
+  mvar <- liftIO newEmptyMVar
+  return $ go cin cout ph mvar False B.hGetNonBlocking
   where
     createp = createProcess cp
       { std_in  = CreatePipe
@@ -52,7 +55,7 @@ pipeProcess cp = flip PipeM (return ()) $ do
       _ <- waitForProcess ph
       return ()
 
-    go cin cout ph rd = do
+    go !cin !cout !ph !mvar !wait !rd = do
       out <- liftIO $ rd cout bufSize
       if B.null out then do
         end <- liftIO $ getProcessExitCode ph
@@ -60,15 +63,25 @@ pipeProcess cp = flip PipeM (return ()) $ do
           Just ec -> do
             lift $ when (ec /= ExitSuccess) $ monadThrow ec
             Done Nothing ()
-          Nothing -> do
-            NeedInput
-              (\inp -> do
-                  liftIO $ B.hPut cin inp >> hFlush cin
-                  go cin cout ph rd)
-              (do liftIO (hClose cin)
-                  go cin cout ph B.hGetSome)
+          Nothing ->
+            if wait then do
+              emp <- liftIO $ isEmptyMVar mvar
+              if emp then do
+                go cin cout ph mvar wait rd
+              else do
+                liftIO $ takeMVar mvar
+                go cin cout ph mvar False rd
+            else do
+              NeedInput
+                (\inp -> do
+                    liftIO $ do
+                      B.hPut cin inp
+                      forkIO (hFlush cin >>= putMVar mvar)
+                    go cin cout ph mvar True rd)
+                (do liftIO (hClose cin)
+                    go cin cout ph mvar wait B.hGetSome)
       else do
-        HaveOutput (go cin cout ph rd) (return ()) out
+        HaveOutput (go cin cout ph mvar wait rd) (return ()) out
 
 -- | Source of process
 sourceProcess :: MonadResource m => CreateProcess -> Source m B.ByteString

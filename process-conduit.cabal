@@ -1,5 +1,5 @@
 Name:                process-conduit
-Version:             0.4.0
+Version:             0.4.1
 Synopsis:            Conduits for processes
 
 Description:
@@ -46,7 +46,7 @@ Executable process-conduit
   Hs-source-dirs:      examples
   Main-is:             TestConduit.hs
   Build-depends:       base            == 4.*
-                     , conduit         == 0.4.*
+                     , conduit
                      , process-conduit
   if !flag(examples)
     Buildable:         False
