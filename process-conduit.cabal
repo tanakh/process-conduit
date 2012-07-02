@@ -1,60 +1,60 @@
-Name:                process-conduit
-Version:             0.4.1
-Synopsis:            Conduits for processes
+name:                process-conduit
+version:             0.4.1
+synopsis:            Conduits for processes
 
-Description:
+description:
   Conduits for processes.
   For more details: <https://github.com/tanakh/process-conduit/blob/master/README.md>
 
-Homepage:            http://github.com/tanakh/process-conduit
-License:             BSD3
-License-file:        LICENSE
-Author:              Hideyuki Tanaka
-Maintainer:          Hideyuki Tanaka <tanaka.hideyuki@gmail.com>
-Copyright:           (c) 2011-2012, Hideyuki Tanaka
-Category:            System, Conduit
-Build-type:          Simple
-Cabal-version:       >=1.8
+homepage:            http://github.com/tanakh/process-conduit
+license:             BSD3
+license-file:        LICENSE
+author:              Hideyuki Tanaka
+maintainer:          Hideyuki Tanaka <tanaka.hideyuki@gmail.com>
+copyright:           (c) 2011-2012, Hideyuki Tanaka
+category:            System, Conduit
+build-type:          Simple
+cabal-version:       >=1.8
 
-Extra-source-files:  README.md
+extra-source-files:  README.md
 
-Source-repository head
-  Type:                git
-  Location:            git://github.com/tanakh/process-conduit.git
+source-repository head
+  type:                git
+  location:            git://github.com/tanakh/process-conduit.git
 
-Flag examples
-  Description:         Build examples
-  Default:             False
+flag examples
+  description:         Build examples
+  default:             False
 
-Library
-  Exposed-modules:     Data.Conduit.Process
+library
+  exposed-modules:     Data.Conduit.Process
                        System.Process.QQ
   
-  Build-depends:       base             == 4.*
+  euild-depends:       base             == 4.*
                      , template-haskell >= 2.4 && < 2.8
-                     , mtl              >= 2.0 && < 2.2
-                     , bytestring       == 0.9.*
-                     , text             == 0.11.*
-                     , process          >= 1.0 && < 1.2
-                     , conduit          == 0.4.*
+                     , mtl              >= 2.0
+                     , bytestring       >= 0.9
+                     , text             >= 0.11
+                     , process          >= 1.0
+                     , conduit          == 0.5.*
                      , resourcet
-                     , shakespeare-text
+                     , shakespeare-text >= 1.0
 
-  Ghc-options:         -Wall
+  ghc-options:         -Wall
 
-Executable process-conduit
-  Hs-source-dirs:      examples
-  Main-is:             TestConduit.hs
-  Build-depends:       base            == 4.*
+executable process-conduit
+  hs-source-dirs:      examples
+  main-is:             TestConduit.hs
+  build-depends:       base            == 4.*
                      , conduit
                      , process-conduit
   if !flag(examples)
-    Buildable:         False
+    buildable:         False
 
-Executable process-qq
-  Hs-source-dirs:      examples
-  Main-is:             TestQQ.hs
-  Build-depends:       base            == 4.*
+executable process-qq
+  hs-source-dirs:      examples
+  main-is:             TestQQ.hs
+  build-depends:       base            == 4.*
                      , process-conduit
   if !flag(examples)
-    Buildable:         False
+    buildable:         False
