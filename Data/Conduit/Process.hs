@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, OverloadedStrings, DoAndIfThenElse, BangPatterns #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings, BangPatterns #-}
 module Data.Conduit.Process (
   -- * Run process
   pipeProcess,
@@ -56,21 +56,24 @@ pipeProcess cp = do
 
     go !cin !cout !ph !mvar !wait !rd = do
       out <- liftIO $ rd cout bufSize
-      if S.null out then do
+      if S.null out
+        then do
         end <- liftIO $ getProcessExitCode ph
         case end of
           Just ec -> do
             lift $ when (ec /= ExitSuccess) $ monadThrow ec
             return ()
           Nothing ->
-            if wait then do
+            if wait
+              then do
               emp <- liftIO $ isEmptyMVar mvar
-              if emp then do
+              if emp
+                then do
                 go cin cout ph mvar wait rd
-              else do
+                else do
                 liftIO $ takeMVar mvar
                 go cin cout ph mvar False rd
-            else do
+              else do
               mb <- await
               case mb of
                 Just inp -> do
@@ -81,7 +84,7 @@ pipeProcess cp = do
                 Nothing -> do
                   liftIO (hClose cin)
                   go cin cout ph mvar wait S.hGetSome
-      else do
+        else do
         yield out
         go cin cout ph mvar wait rd
 
