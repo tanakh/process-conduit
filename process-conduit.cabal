@@ -22,10 +22,6 @@ source-repository head
   type:                git
   location:            git://github.com/tanakh/process-conduit.git
 
-flag examples
-  description:         Build examples
-  default:             False
-
 library
   exposed-modules:     Data.Conduit.Process
                        System.Process.QQ
@@ -43,19 +39,13 @@ library
 
   ghc-options:         -Wall
 
-executable process-conduit
-  hs-source-dirs:      examples
-  main-is:             TestConduit.hs
+test-suite process-conduit-test
+  type:                exitcode-stdio-1.0
+  hs-source-dirs:      dist
+  main-is:             ../test.hs
   build-depends:       base            == 4.*
+                     , bytestring
+                     , hspec           >= 1.2
+                     , HUnit           >= 1.2
                      , conduit
                      , process-conduit
-  if !flag(examples)
-    buildable:         False
-
-executable process-qq
-  hs-source-dirs:      examples
-  main-is:             TestQQ.hs
-  build-depends:       base            == 4.*
-                     , process-conduit
-  if !flag(examples)
-    buildable:         False
