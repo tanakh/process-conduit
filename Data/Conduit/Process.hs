@@ -4,12 +4,12 @@ module Data.Conduit.Process (
   pipeProcess,
   sourceProcess,
   conduitProcess,
-  
+
   -- * Run shell command
   pipeCmd,
   sourceCmd,
   conduitCmd,
-  
+
   -- * Convenience re-exports
   shell,
   proc,
@@ -19,14 +19,13 @@ module Data.Conduit.Process (
   ProcessHandle,
   ) where
 
-import Control.Concurrent
-import Control.Concurrent.MVar
+import Control.Concurrent hiding (yield)
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Resource
-import qualified Data.ByteString as B
+import qualified Data.ByteString as S
 import Data.Conduit
-import qualified Data.Conduit.List as C
+import qualified Data.Conduit.List as CL
 import System.Exit
 import System.IO
 import System.Process
@@ -38,11 +37,11 @@ bufSize = 64 * 1024
 pipeProcess
   :: MonadResource m
      => CreateProcess
-     -> Pipe B.ByteString B.ByteString m ()
-pipeProcess cp = flip PipeM (return ()) $ do
-  (_, (Just cin, Just cout, _, ph)) <- allocate createp closep
+     -> GConduit S.ByteString m S.ByteString
+pipeProcess cp = do
+  (_, (Just cin, Just cout, _, ph)) <- lift $ allocate createp closep
   mvar <- liftIO newEmptyMVar
-  return $ go cin cout ph mvar False B.hGetNonBlocking
+  go cin cout ph mvar False S.hGetNonBlocking
   where
     createp = createProcess cp
       { std_in  = CreatePipe
@@ -57,12 +56,12 @@ pipeProcess cp = flip PipeM (return ()) $ do
 
     go !cin !cout !ph !mvar !wait !rd = do
       out <- liftIO $ rd cout bufSize
-      if B.null out then do
+      if S.null out then do
         end <- liftIO $ getProcessExitCode ph
         case end of
           Just ec -> do
             lift $ when (ec /= ExitSuccess) $ monadThrow ec
-            Done Nothing ()
+            return ()
           Nothing ->
             if wait then do
               emp <- liftIO $ isEmptyMVar mvar
@@ -72,33 +71,38 @@ pipeProcess cp = flip PipeM (return ()) $ do
                 liftIO $ takeMVar mvar
                 go cin cout ph mvar False rd
             else do
-              NeedInput
-                (\inp -> do
-                    liftIO $ do
-                      B.hPut cin inp
-                      forkIO (hFlush cin >>= putMVar mvar)
-                    go cin cout ph mvar True rd)
-                (do liftIO (hClose cin)
-                    go cin cout ph mvar wait B.hGetSome)
+              mb <- await
+              case mb of
+                Just inp -> do
+                  liftIO $ do
+                    S.hPut cin inp
+                    forkIO (hFlush cin >>= putMVar mvar)
+                  go cin cout ph mvar True rd
+                Nothing -> do
+                  liftIO (hClose cin)
+                  go cin cout ph mvar wait S.hGetSome
       else do
-        HaveOutput (go cin cout ph mvar wait rd) (return ()) out
+        yield out
+        go cin cout ph mvar wait rd
 
 -- | Source of process
-sourceProcess :: MonadResource m => CreateProcess -> Source m B.ByteString
-sourceProcess cp = C.sourceNull $= conduitProcess cp
+sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
+sourceProcess cp = CL.sourceNull >+> conduitProcess cp
 
 -- | Conduit of process
-conduitProcess :: MonadResource m => CreateProcess -> Conduit B.ByteString m B.ByteString
+conduitProcess :: MonadResource m
+                  => CreateProcess -> GConduit S.ByteString m S.ByteString
 conduitProcess = pipeProcess
 
 -- | Pipe of shell command
-pipeCmd :: MonadResource m => String -> Pipe B.ByteString B.ByteString m ()
+pipeCmd :: MonadResource m
+           => String -> GConduit S.ByteString m S.ByteString
 pipeCmd = pipeProcess . shell
 
 -- | Source of shell command
-sourceCmd :: MonadResource m => String -> Source m B.ByteString
+sourceCmd :: MonadResource m => String -> GSource m S.ByteString
 sourceCmd = sourceProcess . shell
 
 -- | Conduit of shell command
-conduitCmd :: MonadResource m => String -> Conduit B.ByteString m B.ByteString
+conduitCmd :: MonadResource m => String -> GConduit S.ByteString m S.ByteString
 conduitCmd = conduitProcess . shell
