@@ -1,5 +1,5 @@
 process-conduit: Conduit for processes
-===============================================
+======================================
 
 # About
 
@@ -28,8 +28,8 @@ The result type of `cmd` is Lazy `ByteString`,
 but execution will perform strictly.
 
 The result type of `scmd` and `ccmd` are
-`Source ByteString m ByteString` and
-`Conduit ByteString m ByteString` respectively.
+`GSource m ByteString` and
+`GConduit ByteString m ByteString` respectively.
 
 If a command is failed, an exception is thrown.
 
@@ -40,14 +40,14 @@ Commands are executed in ***run-time***, not compile-time.
 * Create a Source and a Conduit of process
 
 ~~~ {.haskell}
-import qualified Data.Conduit as C
+import Data.Conduit
 import qualified Data.Conduit.Binary as CB
 import Data.Conduit.Process
 import System.IO
 
 main :: IO ()
-main = C.runResourceT $ do
-  sourceCmd "ls" C.$= conduitCmd "sort" C.$$ CB.sinkHandle stdout
+main = runResourceT $ do
+  sourceCmd "ls" $= conduitCmd "sort" $$ CB.sinkHandle stdout
 ~~~
 
 * Invoke a process simply
@@ -64,7 +64,7 @@ main = print =<< [cmd|ls|]
 ~~~ {.haskell}
 main :: IO ()
 main = runResourceT $ do
-  [scmd|ls|] $= [ccmd|sort|] $$ sinkHandle stdout
+  [scmd|ls|] $= [ccmd|sort|] $$ CB.sinkHandle stdout
 ~~~
 
 * Unquoting (syntax is same as [shakespeare-text](http://hackage.haskell.org/package/shakespeare-text))
