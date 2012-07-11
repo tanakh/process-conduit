@@ -5,4 +5,5 @@ import System.IO
 
 main :: IO ()
 main = runResourceT $ do
-  sourceCmd "ls" $= conduitCmd "sort" $$ sinkHandle stdout
+  sourceCmd "ls" $$ sinkHandle stdout
+  sourceCmd "ls" $$ conduitCmd "sort" =$= sinkHandle stdout
