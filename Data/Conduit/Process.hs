@@ -22,6 +22,7 @@ module Data.Conduit.Process (
 import Control.Concurrent hiding (yield)
 import Control.Monad
 import Control.Monad.Trans
+import Control.Monad.Trans.Loop
 import Control.Monad.Trans.Resource
 import qualified Data.ByteString as S
 import Data.Conduit
@@ -55,38 +56,50 @@ pipeProcess cp = do
       return ()
 
     go !cin !cout !ph !mvar !wait !rd = do
-      out <- liftIO $ rd cout bufSize
-      if S.null out
-        then do
-        end <- liftIO $ getProcessExitCode ph
-        case end of
-          Just ec -> do
-            lift $ when (ec /= ExitSuccess) $ monadThrow ec
-            return ()
-          Nothing ->
-            if wait
+      repeatLoopT $ do
+        out <- liftIO $ S.hGetNonBlocking cout bufSize
+        when (S.null out) exit
+        lift $ yield out
+
+      end <- liftIO $ getProcessExitCode ph
+      case end of
+        Just ec -> do
+          lift $ when (ec /= ExitSuccess) $ monadThrow ec
+          return ()
+        Nothing -> do
+          mb <- await
+          case mb of
+            Just inp -> do
+              liftIO $ do
+                S.hPut cin inp
+                hFlush cin
+              go cin cout ph mvar True rd
+            Nothing -> do
+              liftIO (hClose cin)
+              go cin cout ph mvar wait S.hGetSome
+
+          {-
+          if wait
+            then do
+            emp <- liftIO $ isEmptyMVar mvar
+            if emp
               then do
-              emp <- liftIO $ isEmptyMVar mvar
-              if emp
-                then do
-                go cin cout ph mvar wait rd
-                else do
-                liftIO $ takeMVar mvar
-                go cin cout ph mvar False rd
+              go cin cout ph mvar wait rd
               else do
-              mb <- await
-              case mb of
-                Just inp -> do
-                  liftIO $ do
-                    S.hPut cin inp
-                    forkIO (hFlush cin >>= putMVar mvar)
-                  go cin cout ph mvar True rd
-                Nothing -> do
-                  liftIO (hClose cin)
-                  go cin cout ph mvar wait S.hGetSome
-        else do
-        yield out
-        go cin cout ph mvar wait rd
+              liftIO $ takeMVar mvar
+              go cin cout ph mvar False rd
+            else do
+            mb <- await
+            case mb of
+              Just inp -> do
+                liftIO $ do
+                  S.hPut cin inp
+                  forkIO (hFlush cin >>= putMVar mvar)
+                go cin cout ph mvar True rd
+              Nothing -> do
+                liftIO (hClose cin)
+                go cin cout ph mvar wait S.hGetSome
+-}
 
 -- | Source of process
 sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
