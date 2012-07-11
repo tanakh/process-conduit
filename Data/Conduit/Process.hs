@@ -17,7 +17,7 @@ module Data.Conduit.Process (
   ProcessHandle,
   ) where
 
-import Control.Concurrent hiding (yield)
+import qualified Control.Exception as E
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Loop
@@ -42,27 +42,34 @@ conduitProcess cp = do
   (_, (Just cin, Just cout, _, ph)) <- lift $ allocate createp closep
 
   repeatLoopT $ do
+    -- if process's outputs are available, then yields them.
     repeatLoopT $ do
-      liftIO $ print 123
-      out <- liftIO $ S.hGetNonBlocking cout bufSize
-      liftIO $ print 456
-      when (S.null out) exit
-      lift . lift $ yield out
+      b <- liftIO $ hReady' cout
+      when (not b) exit
+      out <- liftIO $ S.hGetSome cout bufSize
+      void $ lift . lift $ yield out
 
+    -- if process exited, then exit
     end <- liftIO $ getProcessExitCode ph
-    when (isJust end) $ do
-      let ec = fromJust end
-      lift . lift $ when (ec /= ExitSuccess) $ monadThrow ec
-      exit
+    when (isJust end) exit
 
-    mb <- lift await
-    case mb of
-      Just inp -> do
-        liftIO $ do
-          S.hPut cin inp
-          hFlush cin
-      Nothing -> do
-        liftIO $ hClose cin
+    -- if upper stream ended, then exit
+    inp <- lift await
+    when (isNothing inp) exit
+
+    -- put input to process
+    liftIO $ S.hPut cin $ fromJust inp
+    liftIO $ hFlush cin
+
+  -- uppstream or process is done.
+  -- process rest outputs.
+  liftIO $ hClose cin
+  repeatLoopT $ do
+    out <- liftIO $ S.hGetSome cout bufSize
+    when (S.null out) exit
+    lift $ yield out
+  ec <- liftIO $ waitForProcess ph
+  lift $ when (ec /= ExitSuccess) $ monadThrow ec
 
   where
     createp = createProcess cp
@@ -75,6 +82,8 @@ conduitProcess cp = do
       hClose cout
       _ <- waitForProcess ph
       return ()
+
+    hReady' h = hReady h `E.catch` \(E.SomeException _) -> return False
 
 -- | Source of process
 sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
