@@ -1,12 +1,10 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, BangPatterns #-}
 module Data.Conduit.Process (
   -- * Run process
-  pipeProcess,
   sourceProcess,
   conduitProcess,
 
   -- * Run shell command
-  pipeCmd,
   sourceCmd,
   conduitCmd,
 
@@ -34,12 +32,12 @@ import System.Process
 bufSize :: Int
 bufSize = 64 * 1024
 
--- | Pipe of process
-pipeProcess
+-- | Conduit of process
+conduitProcess
   :: MonadResource m
      => CreateProcess
      -> GConduit S.ByteString m S.ByteString
-pipeProcess cp = do
+conduitProcess cp = do
   (_, (Just cin, Just cout, _, ph)) <- lift $ allocate createp closep
   mvar <- liftIO newEmptyMVar
   go cin cout ph mvar False S.hGetNonBlocking
@@ -105,20 +103,10 @@ pipeProcess cp = do
 sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
 sourceProcess cp = CL.sourceNull >+> conduitProcess cp
 
--- | Conduit of process
-conduitProcess :: MonadResource m
-                  => CreateProcess -> GConduit S.ByteString m S.ByteString
-conduitProcess = pipeProcess
-
--- | Pipe of shell command
-pipeCmd :: MonadResource m
-           => String -> GConduit S.ByteString m S.ByteString
-pipeCmd = pipeProcess . shell
+-- | Conduit of shell command
+conduitCmd :: MonadResource m => String -> GConduit S.ByteString m S.ByteString
+conduitCmd = conduitProcess . shell
 
 -- | Source of shell command
 sourceCmd :: MonadResource m => String -> GSource m S.ByteString
 sourceCmd = sourceProcess . shell
-
--- | Conduit of shell command
-conduitCmd :: MonadResource m => String -> GConduit S.ByteString m S.ByteString
-conduitCmd = conduitProcess . shell
