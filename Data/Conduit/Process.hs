@@ -69,7 +69,7 @@ conduitProcess cp = do
     when (S.null out) exit
     lift $ yield out
 
-  ec <- liftIO $ maybe (waitForProcess ph) return end
+  ec <- liftIO $ maybe (waitForProcess' ph) return end
   lift $ when (ec /= ExitSuccess) $ monadThrow ec
 
   where
@@ -84,7 +84,10 @@ conduitProcess cp = do
       _ <- waitForProcess ph
       return ()
 
-    hReady' h = hReady h `E.catch` \(E.SomeException _) -> return False
+    hReady' h =
+      hReady h `E.catch` \(E.SomeException _) -> return False
+    waitForProcess' ph =
+      waitForProcess ph `E.catch` \(E.SomeException _) -> return ExitSuccess
 
 -- | Source of process
 sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
