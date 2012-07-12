@@ -26,7 +26,7 @@ import qualified Data.ByteString as S
 import Data.Conduit
 import qualified Data.Conduit.List as CL
 import Data.Maybe
-import System.Exit
+import System.Exit (ExitCode(..))
 import System.IO
 import System.Process
 
@@ -41,7 +41,7 @@ conduitProcess
 conduitProcess cp = do
   (_, (Just cin, Just cout, _, ph)) <- lift $ allocate createp closep
 
-  repeatLoopT $ do
+  end <- repeatLoopT $ do
     -- if process's outputs are available, then yields them.
     repeatLoopT $ do
       b <- liftIO $ hReady' cout
@@ -51,11 +51,11 @@ conduitProcess cp = do
 
     -- if process exited, then exit
     end <- liftIO $ getProcessExitCode ph
-    when (isJust end) exit
+    when (isJust end) $ exitWith end
 
     -- if upper stream ended, then exit
     inp <- lift await
-    when (isNothing inp) exit
+    when (isNothing inp) $ exitWith Nothing
 
     -- put input to process
     liftIO $ S.hPut cin $ fromJust inp
@@ -68,7 +68,8 @@ conduitProcess cp = do
     out <- liftIO $ S.hGetSome cout bufSize
     when (S.null out) exit
     lift $ yield out
-  ec <- liftIO $ waitForProcess ph
+
+  ec <- liftIO $ maybe (waitForProcess ph) return end
   lift $ when (ec /= ExitSuccess) $ monadThrow ec
 
   where
