@@ -6,8 +6,7 @@ import System.Process.QQ
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Conduit
 import qualified Data.Conduit.Binary as CB
-import Test.Hspec.Monadic
-import Test.Hspec.HUnit
+import Test.Hspec
 import Test.HUnit
 
 main :: IO ()
