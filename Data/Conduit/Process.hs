@@ -21,7 +21,6 @@ import qualified Control.Exception as E
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Loop
-import Control.Monad.Trans.Resource
 import qualified Data.ByteString as S
 import Data.Conduit
 import qualified Data.Conduit.List as CL
@@ -38,9 +37,7 @@ conduitProcess
   :: MonadResource m
      => CreateProcess
      -> GConduit S.ByteString m S.ByteString
-conduitProcess cp = do
-  (_, (Just cin, Just cout, _, ph)) <- lift $ allocate createp closep
-
+conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> do
   end <- repeatLoopT $ do
     -- if process's outputs are available, then yields them.
     repeatLoopT $ do
