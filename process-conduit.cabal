@@ -44,7 +44,6 @@ test-suite process-conduit-test
   main-is:             ../test.hs
   build-depends:       base            == 4.*
                      , bytestring
-                     , hspec           >= 1.2
-                     , HUnit           >= 1.2
+                     , hspec           >= 1.3
                      , conduit
                      , process-conduit
