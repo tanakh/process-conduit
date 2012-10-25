@@ -3,4 +3,4 @@ language: haskell
 install:
     - cabal update
     - cabal install hspec
-    - cabal install
+    - cabal install --enable-tests
