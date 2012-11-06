@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, OverloadedStrings, BangPatterns #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings, BangPatterns, RankNTypes #-}
 module Data.Conduit.Process (
   -- * Run process
   sourceProcess,
