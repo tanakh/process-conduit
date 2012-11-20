@@ -27,7 +27,7 @@ library
                        System.Process.QQ
   
   build-depends:       base             == 4.*
-                     , template-haskell >= 2.4 && < 2.8
+                     , template-haskell >= 2.4 && < 2.9
                      , mtl              >= 2.0
                      , control-monad-loop == 0.1.*
                      , bytestring       >= 0.9
