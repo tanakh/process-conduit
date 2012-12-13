@@ -78,7 +78,7 @@ conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> d
     closep (Just cin, Just cout, _, ph) = do
       hClose cin
       hClose cout
-      _ <- waitForProcess ph
+      _ <- waitForProcess' ph
       return ()
 
     hReady' h =
