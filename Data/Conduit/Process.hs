@@ -36,7 +36,7 @@ bufSize = 64 * 1024
 conduitProcess
   :: MonadResource m
      => CreateProcess
-     -> GConduit S.ByteString m S.ByteString
+     -> Conduit S.ByteString m S.ByteString
 conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> do
   end <- repeatLoopT $ do
     -- if process's outputs are available, then yields them.
@@ -80,6 +80,7 @@ conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> d
       hClose cout
       _ <- waitForProcess' ph
       return ()
+    closep _ = error "Data.Conduit.Process.closep: Unhandled case"
 
     hReady' h =
       hReady h `E.catch` \(E.SomeException _) -> return False
@@ -87,13 +88,13 @@ conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> d
       waitForProcess ph `E.catch` \(E.SomeException _) -> return ExitSuccess
 
 -- | Source of process
-sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
-sourceProcess cp = CL.sourceNull >+> conduitProcess cp
+sourceProcess :: MonadResource m => CreateProcess -> Producer m S.ByteString
+sourceProcess cp = toProducer $ CL.sourceNull $= conduitProcess cp
 
 -- | Conduit of shell command
-conduitCmd :: MonadResource m => String -> GConduit S.ByteString m S.ByteString
+conduitCmd :: MonadResource m => String -> Conduit S.ByteString m S.ByteString
 conduitCmd = conduitProcess . shell
 
 -- | Source of shell command
-sourceCmd :: MonadResource m => String -> GSource m S.ByteString
+sourceCmd :: MonadResource m => String -> Producer m S.ByteString
 sourceCmd = sourceProcess . shell
