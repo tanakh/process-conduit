@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleContexts, OverloadedStrings, BangPatterns, RankNTypes #-}
+{-# LANGUAGE FlexibleContexts, OverloadedStrings, RankNTypes #-}
 module Data.Conduit.Process (
   -- * Run process
   sourceProcess,
@@ -33,16 +33,15 @@ bufSize :: Int
 bufSize = 64 * 1024
 
 -- | Conduit of process
-conduitProcess
-  :: MonadResource m
-     => CreateProcess
-     -> GConduit S.ByteString m S.ByteString
+conduitProcess :: MonadResource m
+                  => CreateProcess
+                  -> Conduit S.ByteString m S.ByteString
 conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> do
   end <- repeatLoopT $ do
     -- if process's outputs are available, then yields them.
     repeatLoopT $ do
       b <- liftIO $ hReady' cout
-      when (not b) exit
+      unless b exit
       out <- liftIO $ S.hGetSome cout bufSize
       void $ lift . lift $ yield out
 
@@ -87,13 +86,13 @@ conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> d
       waitForProcess ph `E.catch` \(E.SomeException _) -> return ExitSuccess
 
 -- | Source of process
-sourceProcess :: MonadResource m => CreateProcess -> GSource m S.ByteString
-sourceProcess cp = CL.sourceNull >+> conduitProcess cp
+sourceProcess :: MonadResource m => CreateProcess -> Source m S.ByteString
+sourceProcess cp = CL.sourceNull =$= conduitProcess cp
 
 -- | Conduit of shell command
-conduitCmd :: MonadResource m => String -> GConduit S.ByteString m S.ByteString
+conduitCmd :: MonadResource m => String -> Conduit S.ByteString m S.ByteString
 conduitCmd = conduitProcess . shell
 
 -- | Source of shell command
-sourceCmd :: MonadResource m => String -> GSource m S.ByteString
+sourceCmd :: MonadResource m => String -> Source m S.ByteString
 sourceCmd = sourceProcess . shell
