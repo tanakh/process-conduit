@@ -1,5 +1,5 @@
 name:                process-conduit
-version:             1.0.0.0
+version:             1.0.0.1
 synopsis:            Conduits for processes
 
 description:
@@ -11,7 +11,7 @@ license:             BSD3
 license-file:        LICENSE
 author:              Hideyuki Tanaka
 maintainer:          Hideyuki Tanaka <tanaka.hideyuki@gmail.com>
-copyright:           (c) 2011-2012, Hideyuki Tanaka
+copyright:           (c) 2011-2013, Hideyuki Tanaka
 category:            System, Conduit
 build-type:          Simple
 cabal-version:       >=1.8
@@ -27,7 +27,7 @@ library
                        System.Process.QQ
   
   build-depends:       base             == 4.*
-                     , template-haskell >= 2.4 && < 2.9
+                     , template-haskell >= 2.4
                      , mtl              >= 2.0
                      , control-monad-loop == 0.1.*
                      , bytestring       >= 0.9
