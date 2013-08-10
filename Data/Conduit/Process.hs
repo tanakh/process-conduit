@@ -70,10 +70,13 @@ conduitProcess cp = bracketP createp closep $ \(Just cin, Just cout, _, ph) -> d
   lift $ when (ec /= ExitSuccess) $ monadThrow ec
 
   where
-    createp = createProcess cp
-      { std_in  = CreatePipe
-      , std_out = CreatePipe
-      }
+    createp = do
+      p@(_, Just cout, _, _) <- createProcess cp
+        { std_in  = CreatePipe
+        , std_out = CreatePipe
+        }
+      liftIO $ hSetBinaryMode cout True  -- only necessary for hReady to work on binary data
+      return p
 
     closep (Just cin, Just cout, _, ph) = do
       hClose cin
