@@ -35,6 +35,7 @@ library
                      , process          >= 1.0
                      , conduit          == 1.0.*
                      , shakespeare-text >= 1.0
+                     , shakespeare
 
   ghc-options:         -Wall
 
