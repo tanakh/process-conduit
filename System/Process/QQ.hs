@@ -8,6 +8,7 @@ module System.Process.QQ (
   ) where
 
 import Control.Applicative
+import Control.Monad.Trans.Resource as R
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
@@ -28,7 +29,7 @@ def = QuasiQuoter
 -- | Command result of (Lazy) ByteString.
 cmd :: QuasiQuoter
 cmd = def { quoteExp = \str -> [|
-  BL.fromChunks <$> C.runResourceT (sourceCmd (LT.unpack $(quoteExp lt str)) C.$$ CL.consume)
+  BL.fromChunks <$> R.runResourceT (sourceCmd (LT.unpack $(quoteExp lt str)) C.$$ CL.consume)
 |] }
 
 -- | Source of shell command
