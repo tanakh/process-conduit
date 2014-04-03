@@ -21,6 +21,7 @@ import qualified Control.Exception as E
 import Control.Monad
 import Control.Monad.Trans
 import Control.Monad.Trans.Loop
+import Control.Monad.Trans.Resource (MonadResource, monadThrow)
 import qualified Data.ByteString as S
 import Data.Conduit
 import qualified Data.Conduit.List as CL

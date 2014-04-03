@@ -7,6 +7,7 @@ import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Conduit
 import qualified Data.Conduit.Binary as CB
 import Test.Hspec
+import Control.Monad.Trans.Resource (runResourceT)
 
 main :: IO ()
 main = hspec $ do

@@ -14,6 +14,7 @@ import qualified Data.Conduit.List as CL
 import qualified Data.Text.Lazy as LT
 import Language.Haskell.TH.Quote
 import Text.Shakespeare.Text
+import Control.Monad.Trans.Resource (runResourceT)
 
 import Data.Conduit.Process
 
@@ -28,7 +29,7 @@ def = QuasiQuoter
 -- | Command result of (Lazy) ByteString.
 cmd :: QuasiQuoter
 cmd = def { quoteExp = \str -> [|
-  BL.fromChunks <$> C.runResourceT (sourceCmd (LT.unpack $(quoteExp lt str)) C.$$ CL.consume)
+  BL.fromChunks <$> runResourceT (sourceCmd (LT.unpack $(quoteExp lt str)) C.$$ CL.consume)
 |] }
 
 -- | Source of shell command

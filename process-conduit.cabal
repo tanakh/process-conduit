@@ -33,7 +33,8 @@ library
                      , bytestring       >= 0.9
                      , text             >= 0.11
                      , process          >= 1.0
-                     , conduit          == 1.0.*
+                     , conduit          >= 1.0 && < 1.2
+                     , resourcet        >= 0.4 && < 1.2
                      , shakespeare-text >= 1.0
                      , shakespeare
 
@@ -47,4 +48,6 @@ test-suite process-conduit-test
                      , bytestring
                      , hspec           >= 1.3
                      , conduit
+                     , conduit-extra
+                     , resourcet
                      , process-conduit
