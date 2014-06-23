@@ -15,6 +15,14 @@ main = hspec $ do
       r <- runResourceT $ sourceCmd "echo abc def" $$ CB.take (10^9)
       L.words r `shouldBe` ["abc", "def"]
 
+    it "get process's large binary output" $ do
+      let binData = L.pack $ replicate (1 * 1024 * 1024) '\xff'
+      r <- runResourceT $
+        CB.sourceLbs binData
+        $$ conduitCmd "cat"
+        =$ CB.sinkLbs
+      L.length (L.takeWhile (== '\xff') r) `shouldBe` L.length binData
+
     it "act as conduit" $ do
       r <- runResourceT $
         sourceProcess (proc "echo" ["zxc\nasd\nqwe"])
