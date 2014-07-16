@@ -8,15 +8,15 @@ module System.Process.QQ (
   ) where
 
 import Control.Applicative
+import Control.Monad.Trans.Resource as R
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
 import qualified Data.Text.Lazy as LT
 import Language.Haskell.TH.Quote
 import Text.Shakespeare.Text
-import Control.Monad.Trans.Resource (runResourceT)
 
-import Data.Conduit.Process
+import Data.Conduit.ProcessOld
 
 def :: QuasiQuoter
 def = QuasiQuoter

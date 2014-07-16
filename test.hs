@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 
-import Data.Conduit.Process
+import Data.Conduit.ProcessOld
 import System.Process.QQ
 
 import qualified Data.ByteString.Lazy.Char8 as L

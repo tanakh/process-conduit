@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, OverloadedStrings, BangPatterns, RankNTypes #-}
-module Data.Conduit.Process (
+module Data.Conduit.ProcessOld (
   -- * Run process
   sourceProcess,
   conduitProcess,
