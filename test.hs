@@ -1,12 +1,13 @@
 {-# LANGUAGE OverloadedStrings, QuasiQuotes #-}
 
-import Data.Conduit.Process
+import Data.Conduit.ProcessOld
 import System.Process.QQ
 
 import qualified Data.ByteString.Lazy.Char8 as L
 import Data.Conduit
 import qualified Data.Conduit.Binary as CB
 import Test.Hspec
+import Control.Monad.Trans.Resource (runResourceT)
 
 main :: IO ()
 main = hspec $ do
