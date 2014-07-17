@@ -2,7 +2,7 @@ name:                process-conduit
 version:             1.2.0.0
 synopsis:            Conduits for processes (deprecated)
 
-description: This package is deprecated. Please use Data.Conduit.Process from wai-extra instead. The original code is maintained in Data.Conduit.ProcessOld for those wishing to use the older API.
+description: This package is deprecated. Please use Data.Conduit.Process from conduit-extra instead. The original code is maintained in Data.Conduit.ProcessOld for those wishing to use the older API.
 
 homepage:            http://github.com/snoyberg/process-conduit
 license:             BSD3
